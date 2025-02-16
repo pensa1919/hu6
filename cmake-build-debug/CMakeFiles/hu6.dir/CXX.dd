@@ -1,3 +1,0 @@
-ninja_dyndep_version = 1.0
-build CMakeFiles/hu6.dir/main.cpp.o: dyndep
-

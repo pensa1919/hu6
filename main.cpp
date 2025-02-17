@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cassert>
 #include <algorithm>
+#include <string>
 
 struct input_entry {
     public:
@@ -10,6 +11,7 @@ struct input_entry {
     char c;
     int count;
     float p = 0;
+    std::string code {""};
     input_entry * left {nullptr};
     input_entry * right {nullptr};
 
@@ -66,8 +68,18 @@ class huffman_list {
 
     void print_list () {
         for (int i = 0; i < v.size(); i++) {
-            std::cout << v[i].c << "  ::  " << v[i].count << "von "<<  v[i].p << std::endl;
+            std::cout << v[i].c << "  ::  " << v[i].count << "von "<<  v[i].p << v[i].code<< std::endl;
         }
+    }
+    void set_code (char c, std::string s) {
+
+        int i = 0;
+        for (;i < v.size() && v[i].c != c;i++);
+        if (i < v.size() && v[i].c == c) {
+            std::cout << "set" << s;
+            v[i].code = s;
+        }
+
     }
     input_entry * operator [] (int i){
         return &v[i];
@@ -82,9 +94,12 @@ class huffman_tree {
         node * next {nullptr};
     };
     node * head {nullptr};
+    huffman_list * list;
+
 
 public:
-    huffman_tree (huffman_list l) {
+    huffman_tree (huffman_list &l) {
+    list = &l;
         for (int i = 0; i < l.sign_count; i++) {
             node * new_node = new node();
             new_node->data = l[i];
@@ -96,6 +111,7 @@ public:
             }
         }
 
+        std::cout << "vor while";
 
         while (head->next && head->next->next) {
             input_entry * d1 = head->data;
@@ -112,9 +128,16 @@ public:
                 new_node->data->right = d1;
             }
 
-            node * rem1 {head}; node * rem2 {head->next};
-            delete rem1; delete rem2;
-            head = head -> next -> next;
+            if (head && head->next) {
+                node * rem1 = head;
+                node * rem2 = head->next;
+                head = head->next->next;
+                delete rem1;
+                delete rem2;
+            }
+
+
+
 
             node * n = head;
             while (n->next && n->next->data->count < new_node->data->count)
@@ -125,6 +148,8 @@ public:
 
 
         }
+        std::cout << "ende while";
+
 
             if (head->next) {
                 input_entry * d1 = head->data;
@@ -132,23 +157,32 @@ public:
                 head = head ->next;
                 delete tmp;
 
-                input_entry * new_entry;
-                new_entry->c = '-';
+                input_entry * new_entry = new input_entry('-');
                 new_entry->count = d1->count + head->data->count;
             }
-
+        std::cout << "called";
+        assert(head);
+        create_code(head->data,"");
 
 
 
     }
-
+    void create_code (input_entry * n, std::string s) {
+            if (!n) return;
+            if (!n->left && !n->right) {
+                list->set_code(n->c, s);
+                return;
+            }
+            create_code(n->left,s+"0");
+            create_code(n->right,s+"1");
+    }
 };
 
 
 
 int main() {
     huffman_list h("input.txt");
+    huffman_tree t(h);
     h.print_list();
-    std::cout << h.get_entry().c << std::endl;
     return 0;
 }
